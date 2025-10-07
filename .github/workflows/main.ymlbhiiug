@@ -1,0 +1,1543 @@
+// ==UserScript==
+// @name         Ultimate Human-like Bing Auto Search
+// @namespace    http://tampermonkey.net/
+// @version      3.4
+// @description  Ultra-realistic Bing searches with advanced anti-detection
+// @author       You
+// @match        https://www.bing.com/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
+// @run-at       document-idle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    
+    // Advanced Configuration - ORIGINAL GAP RULES
+    const CONFIG = {
+        storageKey: 'ultimateBingSearchData',
+        maxSessionSearches: 50,
+        breakInterval: 120, // 120 minutes
+        microBreakDuration: [1, 2], // 1-2 minutes
+        defaultGaps: [6, 7, 8, 9, 10, 12, 15, 18, 20, 25, 30, 35, 40, 45, 50, 60, 75, 90, 105, 120, 150, 180, 210, 240, 300]
+    };
+
+    // // Comprehensive search categories (2200+ terms total)
+    const searchCategories = {
+        usa: [
+    "US presidential election updates", "Supreme Court recent rulings", "Immigration policy changes", "Economic inflation reports", "Climate change initiatives",
+    "National park reservations", "Student loan forgiveness", "Healthcare reform news", "Gun control debates", "Tax legislation updates",
+    "Border security measures", "Infrastructure bill progress", "COVID vaccine guidelines", "Opioid crisis response", "Mental health services",
+    "Social security benefits", "Minimum wage discussions", "Voting rights legislation", "Police reform efforts", "Census data analysis",
+    "Space Force developments", "Military deployment news", "Foreign policy strategies", "Trade agreements status", "Consumer protection alerts",
+    "Small business grants", "Unemployment rates", "Housing market trends", "Gas price fluctuations", "Supply chain issues",
+    "Education standards changes", "School safety protocols", "College admission scandals", "Teacher shortages", "Remote learning tools",
+    "Wildfire prevention measures", "Hurricane preparedness tips", "Flood zone maps", "Drought conditions updates", "Air quality indexes",
+    "Cultural events calendar", "Music festival lineups", "Art exhibition openings", "Museum new acquisitions", "Historical site preservations",
+    "Sports championship results", "Olympic team selections", "Professional league trades", "College sports rankings", "Youth sports programs"
+],
+
+world: [
+    "Global economic outlook", "International travel restrictions", "United Nations meetings", "World Health Organization alerts", "Climate summit agreements",
+    "Refugee crisis updates", "Human rights reports", "Armed conflicts coverage", "Peace treaty negotiations", "Diplomatic relations news",
+    "World population statistics", "Urbanization trends", "Poverty reduction efforts", "Hunger relief programs", "Clean water initiatives",
+    "Infectious disease outbreaks", "Vaccination campaigns", "Public health guidelines", "Medical research breakthroughs", "Pandemic response strategies",
+    "Renewable energy projects", "Carbon emission targets", "Deforestation rates", "Ocean conservation efforts", "Wildlife protection laws",
+    "Cultural heritage sites", "World tourism trends", "Language preservation", "Indigenous rights movements", "Global education initiatives",
+    "Technology adoption rates", "Internet access expansion", "Digital divide issues", "Cybersecurity threats", "Data privacy regulations",
+    "Space exploration missions", "Astronomical discoveries", "Planetary defense tests", "Satellite launches", "International space station",
+    "Maritime law updates", "Fishing rights disputes", "Shipping route changes", "Piracy incidents", "Naval exercises",
+    "Global sports events", "World records broken", "International competitions", "Athlete doping scandals", "Sports diplomacy efforts"
+],
+
+cricket: [
+    "ICC tournament schedules", "Test match results", "ODI series standings", "T20 league rankings", "Player performance statistics",
+    "Cricket bat reviews", "Bowling techniques analysis", "Fielding drills", "Captaincy strategies", "Coach appointments",
+    "Umpiring decisions controversy", "DRS system updates", "Pitch conditions reports", "Weather impact on matches", "Day night test matches",
+    "Cricket broadcasting rights", "Live streaming platforms", "Commentary team changes", "Cricket documentaries", "Player interviews",
+    "Injury updates players", "Retirement announcements", "Young talent spotlights", "All rounder performances", "Wicketkeeper records",
+    "Cricket equipment innovations", "Protective gear reviews", "Training aids recommendations", "Fitness regimens", "Diet plans cricketers",
+    "Domestic cricket news", "First class matches", "List A competitions", "T20 domestic leagues", "Women's cricket developments",
+    "Cricket administration news", "Governing body decisions", "Funding allocations", "Grassroots programs", "School cricket initiatives",
+    "Cricket history moments", "Record breaking innings", "Memorable matches", "Legendary players profiles", "Evolution of cricket rules",
+    "Fan engagement activities", "Cricket memorabilia", "Stadium renovations", "Ticket booking information", "Merchandise new releases"
+],
+
+bollywood: [
+    "New movie releases", "Box office collections", "Actor signing news", "Actress pregnancy announcements", "Director next projects",
+    "Film production updates", "Shooting locations", "Movie trailer launches", "Song promotions", "Dance choreography videos",
+    "Award ceremony results", "Film festival entries", "Critic reviews latest", "Audience reactions", "Controversy surrounding films",
+    "Celebrity wedding details", "Divorce rumors", "Relationship confirmations", "Breakup news", "Family expansion announcements",
+    "Fashion style icons", "Red carpet looks", "Brand endorsement deals", "Social media presence", "Charity work celebrities",
+    "Health updates stars", "Surgery revelations", "Fitness routines", "Diet plans actors", "Wellness retreats",
+    "Behind the scenes footage", "Making of documentaries", "Script writing process", "Casting calls", "Audition tapes",
+    "Bollywood news portals", "Gossip columns", "Exclusive interviews", "Press conference highlights", "Media interactions",
+    "Classic movie reruns", "Old songs popularity", "Nostalgic film discussions", "Remake announcements", "Sequel confirmations",
+    "Legal issues celebrities", "Court cases updates", "Property disputes", "Contract disagreements", "Plagiarism accusations"
+],
+
+hollywood: [
+    "Studio film announcements", "Production company mergers", "Streaming service original content", "Theatrical release strategies", "Video on demand premieres",
+    "Actor transformation roles", "Actress award campaigns", "Director vision statements", "Producer investment news", "Screenwriter credit disputes",
+    "Special effects innovations", "Stunt coordinator interviews", "Costume design showcases", "Set construction details", "Location scouting reports",
+    "Film distribution deals", "International market performance", "Piracy prevention measures", "Copyright infringement cases", "Profit sharing agreements",
+    "Celebrity lifestyle features", "Home tours stars", "Car collections", "Vacation destinations", "Hobby revelations",
+    "Political views actors", "Social activism participation", "Environmental advocacy", "Human rights support", "Education initiatives",
+    "Hollywood walk of fame", "Star ceremony events", "Handprint ceremonies", "Museum exhibitions", "Historical preservation efforts",
+    "Technology in filmmaking", "Virtual production stages", "AI in editing", "Digital distribution platforms", "Interactive storytelling",
+    "Genre trends analysis", "Horovie revival", "Sci-fi franchises", "Superhero fatigue discussion", "Independent film success",
+    "Casting diversity initiatives", "Inclusion riders", "Pay equity reports", "Workplace safety protocols", "Mental health support industry"
+],
+
+anime: [
+    "New anime season lineups", "Manga adaptation announcements", "Light novel translations", "Studio production schedules", "Director interviews",
+    "Voice actor cast changes", "English dub releases", "Subtitle quality discussions", "Streaming service exclusives", "Blu-ray collection editions",
+    "Anime convention updates", "Cosplay competition results", "Guest appearance announcements", "Panel discussion summaries", "Merchandise launches",
+    "Character popularity polls", "Ship community debates", "Fan art showcases", "AMV contests", "Fan fiction trends",
+    "Anime music releases", "Opening theme rankings", "Ending theme reviews", "Soundtrack sales", "Live concert events",
+    "Genre analysis articles", "Isekai trends", "Mecha developments", "Slice of life recommendations", "Horror anime reviews",
+    "Historical accuracy discussions", "Cultural references explanations", "Language learning through anime", "Translation notes", "Localization changes",
+    "Industry labor issues", "Animator working conditions", "Production committee roles", "Revenue distribution", "Piracy impact studies",
+    "Anime influence on fashion", "Hair style trends", "Clothing line collaborations", "Food recipes inspired", "Travel to locations",
+    "Anime gaming crossovers", "Video game adaptations", "Mobile game events", "Console game releases", "VR anime experiences"
+],
+
+youtubers: [
+    "Channel subscription milestones", "Video view records", "Live stream highlights", "Collaboration announcements", "Feud resolutions",
+    "Content creator meetups", "Platform policy changes", "Algorithm updates impact", "Revenue sharing reports", "Sponsorship deals",
+    "Merchandise line launches", "Product placement disclosures", "Affiliate marketing strategies", "Crowdfunding campaigns", "Patreon exclusive content",
+    "Video editing tutorials", "Equipment setup guides", "Lighting techniques", "Audio improvement tips", "Thumbnail design strategies",
+    "Community tab posts", "Poll results", "Q&A sessions", "Giveaway winners", "Charity drive totals",
+    "Copyright claim issues", "Fair use defenses", "Content ID disputes", "Channel strikes appeals", "Account termination stories",
+    "Niche community building", "Algorithm gaming attempts", "Trend jumping success", "Viral video analysis", "Content burnout discussions",
+    "Personal life updates", "Moving vlogs", "Relationship announcements", "Family introductions", "Health journey videos",
+    "Behind the scenes content", "Bloopers compilation", "Deleted scenes", "Alternate endings", "Audition tapes",
+    "Industry event coverage", "Award ceremony attendance", "Panel participation", "Keynote speeches", "Workshop hosting"
+],
+
+latest_news: [
+    "Breaking news alerts", "Developing stories", "News conference live", "Press release summaries", "Official statement analysis",
+    "Emergency situation updates", "Natural disaster reports", "Accident investigations", "Rescue operation progress", "Relief efforts coordination",
+    "Political scandal revelations", "Corruption expose", "Whistleblower testimony", "Investigation committee findings", "Legal proceeding updates",
+    "Scientific discovery announcements", "Research paper publications", "Clinical trial results", "Technology prototype demonstrations", "Innovation awards",
+    "Economic indicator releases", "Stock market movements", "Currency exchange rates", "Commodity price changes", "Trade balance figures",
+    "Social movement activities", "Protest organization", "Demonstration coverage", "Activist demands", "Government response",
+    "Entertainment industry news", "Celebrity legal issues", "Film production halts", "Music album leaks", "Sports team controversies",
+    "Health advisory issuance", "Disease outbreak containment", "Vaccination program expansion", "Medical supply shortages", "Hospital capacity status",
+    "Education policy changes", "School closure decisions", "Examination postponements", "Curriculum revisions", "Teacher union negotiations",
+    "Environmental incident reports", "Pollution level measurements", "Wildlife accident news", "Conservation success stories", "Climate action protests"
+],
+
+nepal_gen_z: [
+    "Gen Z fashion trends Nepal", "Social media usage patterns", "Online learning platforms", "Digital literacy programs", "Youth entrepreneurship initiatives",
+    "Music preferences analysis", "Local artist promotions", "Concert attendance habits", "Dance challenge participation", "Music video production",
+    "Political engagement levels", "Voting registration drives", "Student union activities", "Youth wing meetings", "Policy advocacy campaigns",
+    "Mental health awareness", "Counseling service access", "Peer support groups", "Stress management workshops", "Wellness app usage",
+    "Career aspiration surveys", "Job market preparation", "Internship opportunities", "Skill development courses", "Freelancing platforms",
+    "Cultural identity discussions", "Traditional vs modern values", "Language preservation efforts", "Festival celebration changes", "Family dynamics evolution",
+    "Technology adoption rates", "Smartphone ownership statistics", "Internet usage patterns", "Gaming community growth", "E-sports tournaments",
+    "Environmental activism", "Clean-up campaigns", "Recycling initiatives", "Climate strike participation", "Sustainable lifestyle adoption",
+    "Education system feedback", "Curriculum relevance", "Examination stress", "Private tuition trends", "Study abroad aspirations",
+    "Health and fitness trends", "Gym membership growth", "Sports participation rates", "Dietary habit changes", "Healthcare access improvements"
+],
+
+mission_sindoor: [
+    "Mission Sindoor objectives", "Project timeline updates", "Team member introductions", "Funding status reports", "Partnership announcements",
+    "Technical specifications", "Engineering challenges", "Design iterations", "Prototype testing results", "Safety measures implementation",
+    "Scientific goals", "Research methodology", "Data collection plans", "Analysis techniques", "Result interpretation",
+    "Community engagement strategies", "Volunteer recruitment", "Awareness campaigns", "Educational materials distribution", "Public support levels",
+    "Media coverage analysis", "Documentary production", "Press kit releases", "Interview arrangements", "Social media outreach",
+    "Historical context", "Previous similar missions", "Lessons learned", "Innovation comparisons", "Technology transfer",
+    "Risk assessment reports", "Contingency plans", "Failure mode analysis", "Success criteria definition", "Performance metrics",
+    "Ethical considerations", "Environmental impact study", "Cultural sensitivity", "Stakeholder consultations", "Regulatory approvals",
+    "International collaboration", "Expert consultations", "Knowledge sharing", "Joint research efforts", "Cross-border partnerships",
+    "Future expansion plans", "Scale-up possibilities", "Long-term vision", "Legacy projects", "Sustainability measures"
+],
+
+football: [
+    "League standings updates", "Transfer window rumors", "Player contract negotiations", "Manager tactics analysis", "Formation changes",
+    "Injury list reports", "Recovery progress", "Fixture congestion issues", "Squad rotation policies", "Youth team promotions",
+    "Refereeing decision reviews", "VAR implementation feedback", "Disciplinary actions", "Appeal processes", "Rule change proposals",
+    "Stadium atmosphere reviews", "Fan behavior incidents", "Ticket pricing changes", "Membership benefits", "Supporter group activities",
+    "Broadcasting rights deals", "Commentary team changes", "Pundit opinions", "Pre-match analysis", "Post-match discussions",
+    "Player performance statistics", "Goal scoring records", "Assist leaders", "Clean sheet streaks", "Tackling success rates",
+    "Club financial reports", "Revenue streams analysis", "Wage structure changes", "Sponsorship deals", "Merchandise sales figures",
+    "International match schedules", "Friendly game results", "Qualification campaign progress", "Tournament preparation", "Squad selection debates",
+    "Grassroots development", "Academy system updates", "Coaching certification", "Talent identification", "Women's football growth",
+    "Technology in football", "Performance tracking devices", "Video analysis software", "Goal line technology", "Fan engagement apps"
+],
+
+basketball: [
+    "NBA playoff picture", "Draft prospect evaluations", "Trade deadline moves", "Free agency rumors", "Salary cap implications",
+    "Player efficiency ratings", "Advanced statistics analysis", "Clutch performance metrics", "Defensive player rankings", "Three-point shooting trends",
+    "Coach of the year race", "Most improved player", "Rookie of the year", "Sixth man candidates", "All-star selections",
+    "Injury report updates", "Load management strategies", "Rehabilitation techniques", "Sports science applications", "Recovery technology",
+    "League expansion talks", "New franchise locations", "Relocation possibilities", "Arena construction updates", "Facility improvements",
+    "Officiating consistency", "Replay center decisions", "Flagrant foul reviews", "Technical foul appeals", "Rule interpretation changes",
+    "International basketball news", "Euroleague standings", "FIBA competitions", "World cup preparations", "Olympic qualifying tournaments",
+    "College basketball updates", "NCAA tournament bubble", "Recruiting class rankings", "Transfer portal activity", "Coaching carousel",
+    "Basketball culture", "Sneaker release dates", "Jersey sales figures", "Player podcast popularity", "Social media influence",
+    "Youth basketball programs", "Skills camps schedule", "AAU tournament results", "Scholarship offers", "Professional pathway advice"
+],
+
+nasa: [
+    "Artemis mission progress", "Lunar gateway construction", "Mars sample return plans", "International space station operations", "Commercial crew launches",
+    "James Webb telescope findings", "Hubble telescope updates", "Planetary science discoveries", "Astrobiology research", "Exoplanet characterization",
+    "Earth science data", "Climate monitoring", "Weather pattern analysis", "Natural disaster response", "Environmental change tracking",
+    "Technology demonstration missions", "New propulsion systems", "Radiation protection", "Life support advancements", "Space suit designs",
+    "Education outreach programs", "STEM initiatives", "Student competitions", "Internship opportunities", "Public engagement events",
+    "Partnership with private companies", "Contract awards", "Collaborative projects", "Technology transfer", "Innovation partnerships",
+    "Budget allocation details", "Congressional hearings", "Funding priorities", "Cost overrun reports", "Economic impact studies",
+    "Safety protocol reviews", "Risk assessment documents", "Accident investigation results", "Lessons learned", "Continuous improvement",
+    "Historical mission archives", "Apollo program reflections", "Space shuttle memories", "Pioneer profiles", "Future vision statements",
+    "Workforce diversity efforts", "Employment statistics", "Recruitment campaigns", "Employee retention", "Workplace culture initiatives"
+],
+
+isro: [
+    "Chandrayaan-3 mission updates", "Lander technology advancements", "Rover mobility systems", "Orbiter payload operations", "Lunar surface findings",
+    "Gaganyaan program developments", "Astronaut selection process", "Human rating certifications", "Crew escape mechanisms", "Life support systems testing",
+    "Satellite launch manifest", "PSLV mission preparations", "GSLV launch capabilities", "Small satellite deployments", "Commercial launch services",
+    "Earth observation data applications", "Natural resource mapping", "Agricultural monitoring systems", "Urban planning support", "Disaster management initiatives",
+    "Navigation system enhancements", "IRNSS coverage expansion", "Accuracy improvement measures", "User receiver development", "Application ecosystem growth",
+    "Space science mission updates", "Aditya-L1 solar studies", "Space weather monitoring", "Planetary exploration plans", "Astronomical observations",
+    "Technology development programs", "Reusable launch vehicle tests", "Scramjet engine demonstrations", "Advanced materials research", "System miniaturization efforts",
+    "International collaboration news", "Joint mission announcements", "Data sharing partnerships", "Global space cooperation", "Technology exchange agreements",
+    "Youth outreach activities", "Space science competitions", "Student satellite projects", "Educational workshop programs", "Public awareness campaigns",
+    "Budget allocation details", "Funding utilization reports", "Cost-effective mission planning", "Revenue generation models", "Future project approvals"
+],
+
+technology: [
+    "AI algorithm improvements", "Machine learning applications", "Neural network architectures", "Data encryption standards", "Cloud security protocols",
+    "Quantum computing developments", "Qubit stability research", "Quantum algorithm design", "Quantum cryptography", "Commercial quantum applications",
+    "Blockchain implementation cases", "Cryptocurrency market trends", "Smart contract applications", "DeFi platform updates", "NFT market dynamics",
+    "IoT device innovations", "Smart home integrations", "Industrial automation systems", "Network security measures", "5G implementation progress",
+    "Robotics technology advances", "Humanoid robot capabilities", "Industrial automation solutions", "Medical robotics applications", "Autonomous drone systems",
+    "Virtual reality enhancements", "Augmented reality applications", "Mixed reality experiences", "Enterprise VR solutions", "Immersive gaming technologies",
+    "Cybersecurity threat analysis", "Phishing prevention techniques", "Ransomware protection methods", "Network defense strategies", "Identity verification systems",
+    "Cloud computing services", "Serverless architecture benefits", "Multi-cloud management", "Edge computing applications", "Data center innovations",
+    "Software development methodologies", "Agile implementation practices", "DevOps automation tools", "Continuous deployment pipelines", "Code quality assurance",
+    "Hardware technology breakthroughs", "Processor architecture updates", "Memory technology advances", "Storage solution innovations", "Display technology improvements"
+],
+
+science: [
+    "Physics research breakthroughs", "Quantum mechanics experiments", "Relativity theory tests", "Particle accelerator findings", "Cosmology study updates",
+    "Biological discoveries", "Genome sequencing projects", "Gene editing applications", "Synthetic biology research", "Evolutionary study findings",
+    "Chemical research advancements", "New compound synthesis", "Reaction mechanism studies", "Materials science developments", "Nanotechnology applications",
+    "Medical research updates", "Disease mechanism studies", "Treatment innovation news", "Vaccine development progress", "Clinical trial results",
+    "Earth science research", "Geological survey findings", "Oceanographic study results", "Atmospheric research data", "Climate change analysis",
+    "Space exploration news", "Planetary mission updates", "Astronomical observation results", "Black hole research findings", "Exoplanet discovery reports",
+    "Psychology research studies", "Behavioral analysis results", "Cognitive science findings", "Neuroscience research updates", "Mental health studies",
+    "Mathematical research", "Number theory developments", "Topological research", "Statistical analysis methods", "Applied mathematics solutions",
+    "Interdisciplinary research", "Bioinformatics advancements", "Computational science applications", "Environmental research findings", "Social science studies"
+],
+
+health: [
+    "Medical news updates", "Disease outbreak reports", "Health advisory announcements", "Treatment guideline revisions", "New drug approval information",
+    "Nutrition science findings", "Dietary trend analysis", "Supplement research results", "Food safety alerts", "Eating disorder treatment methods",
+    "Fitness research updates", "Exercise physiology findings", "Workout methodology studies", "Sports medicine advancements", "Injury prevention techniques",
+    "Mental health research", "Therapy approach updates", "Counseling methodology improvements", "Stress management techniques", "Mindfulness practice benefits",
+    "Women's health studies", "Men's health research", "Child healthcare advancements", "Elderly care innovations", "Preventive medicine approaches",
+    "Healthcare system updates", "Insurance policy changes", "Hospital quality ratings", "Medical practitioner reviews", "Telemedicine service expansions",
+    "Alternative medicine research", "Acupuncture effectiveness studies", "Herbal remedy research", "Chiropractic care benefits", "Homeopathy practice updates",
+    "Public health initiatives", "Vaccination program expansions", "Screening test improvements", "Epidemiology study results", "Health policy changes"
+],
+
+environment: [
+    "Climate change research", "Global warming impact studies", "Carbon emission reduction", "Renewable energy adoption", "Sustainability practice implementations",
+    "Conservation efforts updates", "Wildlife protection measures", "Habitat restoration projects", "Endangered species protection", "Biodiversity conservation programs",
+    "Pollution control measures", "Air quality improvement initiatives", "Water purification projects", "Plastic waste reduction", "Recycling program expansions",
+    "Natural disaster monitoring", "Hurricane tracking systems", "Earthquake early warnings", "Flood prevention measures", "Wildfire management strategies",
+    "Environmental policy updates", "Regulation implementation news", "International agreement progress", "Carbon trading mechanisms", "Green initiative launches",
+    "Eco-friendly product developments", "Sustainable living practices", "Zero waste initiatives", "Organic farming expansions", "Green building standards",
+    "Ocean health research", "Coral reef protection efforts", "Sustainable fishing practices", "Marine pollution control", "Ocean acidification studies",
+    "Forestry management updates", "Deforestation prevention measures", "Reforestation project progress", "Forest conservation efforts", "Sustainable timber harvesting"
+],
+
+education: [
+    "Education reform initiatives", "Curriculum development updates", "Teaching methodology innovations", "Classroom technology integration", "Online learning platform improvements",
+    "Student performance analysis", "Academic assessment results", "Graduation rate improvements", "College admission process", "Scholarship opportunity updates",
+    "Teacher training programs", "Professional development opportunities", "Educational resource availability", "Classroom management techniques", "Lesson planning resources",
+    "Higher education news", "University ranking updates", "Research funding allocations", "Academic journal publications", "Faculty development programs",
+    "Early childhood education", "Preschool program expansions", "Kindergarten readiness assessments", "Child development research", "Parenting education resources",
+    "Special education advancements", "Learning disability support", "Inclusive education practices", "Individualized education plans", "Therapy service improvements",
+    "Vocational training updates", "Skill development programs", "Apprenticeship opportunities", "Career guidance services", "Job placement assistance",
+    "International education news", "Study abroad program expansions", "Student exchange opportunities", "Global curriculum development", "Language learning resources"
+],
+
+business: [
+    "Market trend analysis", "Industry sector performance", "Consumer behavior studies", "Competitive strategy developments", "Business model innovations",
+    "Startup ecosystem news", "Venture capital investments", "Funding round announcements", "Entrepreneurship support programs", "Innovation hub developments",
+    "Corporate news updates", "Merger and acquisition deals", "Leadership transition announcements", "Financial performance reports", "Stock market analysis",
+    "Small business developments", "Local economic conditions", "Retail industry news", "Service sector updates", "Manufacturing industry trends",
+    "Global business developments", "Trade relationship updates", "Supply chain management", "Import-export regulations", "International market conditions",
+    "Management practice updates", "Leadership development programs", "Team building strategies", "Organizational culture improvements", "Change management techniques",
+    "Marketing industry news", "Digital marketing trends", "Brand management strategies", "Advertising campaign results", "Social media marketing effectiveness",
+    "Financial management updates", "Accounting standard changes", "Tax regulation updates", "Investment strategy analysis", "Risk management practices"
+],
+
+finance: [
+    "Stock market performance", "Investment strategy updates", "Portfolio management techniques", "Retirement planning options", "Wealth management services",
+    "Banking industry news", "Interest rate changes", "Loan product offerings", "Credit card updates", "Mortgage rate fluctuations",
+    "Economic indicator reports", "Inflation rate analysis", "Employment statistics", "GDP growth figures", "Consumer confidence indices",
+    "Personal finance advice", "Budgeting techniques", "Saving strategy recommendations", "Debt management solutions", "Financial planning services",
+    "Cryptocurrency market updates", "Bitcoin price movements", "Altcoin developments", "Blockchain technology applications", "Digital asset management",
+    "Insurance industry news", "Life insurance products", "Health insurance options", "Property insurance coverage", "Liability protection plans",
+    "Real estate market conditions", "Housing price trends", "Property value assessments", "Rental market analysis", "Commercial real estate developments",
+    "Regulatory compliance updates", "Financial regulation changes", "Compliance requirements", "Fraud prevention measures", "Consumer protection laws"
+],
+
+travel: [
+    "Destination guide updates", "Travel advisory information", "Packing recommendation changes", "Budget travel options", "Luxury travel experiences",
+    "Airline industry news", "Flight route expansions", "Airport security updates", "Loyalty program benefits", "Baggage policy changes",
+    "Hotel industry updates", "Accommodation option expansions", "Resort facility improvements", "Vacation rental availability", "Hostel network growth",
+    "Tourist attraction developments", "Museum exhibition updates", "Historical site preservations", "Natural wonder protections", "Theme park expansions",
+    "Travel insurance options", "Safety advisory updates", "Health precaution measures", "Visa requirement changes", "Passport processing times",
+    "Adventure travel opportunities", "Hiking trail maintenance", "Scuba diving site conditions", "Safari tour availability", "Extreme sport safety measures",
+    "Cultural experience offerings", "Local custom information", "Food tour availability", "Festival scheduling", "Language translation services",
+    "Sustainable travel practices", "Eco-tourism developments", "Responsible tourism initiatives", "Carbon offset programs", "Community tourism benefits"
+],
+
+food: [
+    "Recipe development updates", "Cooking technique innovations", "Ingredient availability changes", "Meal planning strategies", "Food preparation methods",
+    "Nutrition science updates", "Healthy eating guidelines", "Diet plan effectiveness", "Superfood research findings", "Food allergy management",
+    "Restaurant industry news", "Food trend developments", "Culinary innovation reports", "Chef career updates", "Menu development changes",
+    "Food safety regulations", "Storage method improvements", "Preservation technique updates", "Expiration dating standards", "Food recall announcements",
+    "Cuisine type availability", "Italian culinary traditions", "Chinese cooking methods", "Mexican food variations", "Indian spice usage",
+    "Beverage industry updates", "Wine pairing recommendations", "Coffee brewing techniques", "Tea variety availability", "Cocktail recipe innovations",
+    "Food production news", "Agricultural practice updates", "Food processing advancements", "Supply chain improvements", "Retail market conditions",
+    "Home gardening trends", "Herb cultivation methods", "Vegetable growing techniques", "Composting practices", "Farm-to-table movement"
+],
+
+music: [
+    "New music releases", "Album review updates", "Song lyric analysis", "Music video productions", "Chart position changes",
+    "Artist career developments", "Tour schedule announcements", "Concert review publications", "Festival lineup changes", "Merchandise releases",
+    "Music genre evolution", "Pop music trends", "Rock band developments", "Hip hop culture", "Electronic music scene",
+    "Instrument technology updates", "Guitar playing techniques", "Piano learning methods", "Drumming patterns", "Vocal training approaches",
+    "Music production advancements", "Recording studio technology", "Mixing technique improvements", "Audio software updates", "Sound engineering innovations",
+    "Music theory applications", "Composition techniques", "Harmony principles", "Rhythm patterns", "Notation system updates",
+    "Music history research", "Classical music performances", "Jazz tradition preservation", "Folk music revival", "Genre evolution studies",
+    "Music business news", "Record label operations", "Streaming service features", "Royalty distribution systems", "Copyright protection measures"
+],
+
+art: [
+    "Art exhibition schedules", "Gallery opening announcements", "Museum acquisition reports", "Artist interview publications", "Curator discussion events",
+    "Art movement analysis", "Contemporary art trends", "Modern art interpretations", "Renaissance study updates", "Impressionism research",
+    "Art technique developments", "Painting method innovations", "Sculpture material advances", "Printmaking process improvements", "Digital art technology",
+    "Art market conditions", "Auction result analysis", "Art investment trends", "Collecting strategy updates", "Authentication technology",
+    "Art education programs", "Drawing class availability", "Art school curriculum", "Online course offerings", "Workshop scheduling",
+    "Public art installations", "Street art developments", "Installation art projects", "Mural painting initiatives", "Community art programs",
+    "Art criticism publications", "Review analysis updates", "Theoretical discussion forums", "Aesthetic philosophy", "Cultural impact studies"
+],
+
+books: [
+    "New book publication announcements", "Bestseller list updates", "Author signing events", "Book tour schedules", "Literary award results",
+    "Genre popularity trends", "Fiction market analysis", "Non-fiction subject trends", "Mystery novel developments", "Science fiction innovations",
+    "Publishing industry news", "Book deal announcements", "Editorial staff changes", "Printing technology advances", "E-book format developments",
+    "Reading habit studies", "Book club activities", "Reading challenge participation", "Literary criticism publications", "Review analysis",
+    "Writing technique updates", "Plot development methods", "Character creation approaches", "Publishing process changes", "Self-publishing platforms",
+    "Children's literature trends", "Young adult market analysis", "Illustrated book publications", "Educational material updates", "Picture book innovations",
+    "Library service updates", "Digital library expansions", "Archiving technology improvements", "Preservation method advances", "Community program developments"
+],
+
+sports: [
+    "Olympic Games preparations", "World championship events", "Record attempt results", "Athlete performance analysis", "Team strategy developments",
+    "Extreme sport competitions", "Skateboarding event schedules", "Surfing competition results", "Snowboarding championship events", "Rock climbing achievements",
+    "Water sport activities", "Swimming competition results", "Rowing event schedules", "Sailing race outcomes", "Water polo championships",
+    "Winter sport competitions", "Skiing event results", "Ice hockey league updates", "Figure skating performances", "Curling championship events",
+    "Motor sport racing", "Formula 1 race results", "NASCAR competition updates", "MotoGP championship standings", "Rally racing event schedules",
+    "Combat sport matches", "Boxing championship fights", "MMA event results", "Wrestling competition outcomes", "Martial arts demonstrations",
+    "Athletics competitions", "Track and field events", "Marathon race results", "Triathlon competition updates", "Decathlon championship standings"
+],
+
+gaming: [
+    "Game release announcements", "Console update information", "PC gaming developments", "Mobile game releases", "Virtual reality experiences",
+    "Gaming industry news", "Company strategy announcements", "Industry trend analysis", "Esports competition results", "Streaming platform updates",
+    "Game review publications", "Critic score analysis", "User rating trends", "Walkthrough availability", "Tips and strategy guides",
+    "Gaming hardware releases", "Gaming chair innovations", "Headset technology updates", "Controller design improvements", "Monitor performance enhancements",
+    "Gaming community activities", "Forum discussion trends", "Clan organization updates", "Multiplayer feature improvements", "Social interaction features",
+    "Game development progress", "Game engine updates", "Programming technique advances", "Design methodology improvements", "Testing protocol updates",
+    "Gaming culture developments", "Gaming event schedules", "Convention announcements", "Merchandise releases", "Influencer activities"
+],
+
+social_media: [
+    "Platform feature updates", "Algorithm change announcements", "New service offerings", "Privacy setting modifications", "User statistics reports",
+    "Content creation trends", "Viral content analysis", "Hashtag campaign results", "Challenge participation rates", "Creator economy developments",
+    "Marketing strategy updates", "Influencer partnership trends", "Advertising campaign results", "Audience engagement metrics", "Analytics tool improvements",
+    "Safety feature implementations", "Cyberbullying prevention", "Content moderation policies", "Account security enhancements", "Reporting mechanism improvements",
+    "Trending topic analysis", "Meme popularity cycles", "Video format innovations", "Audio trend developments", "Filter effect creations",
+    "Professional use cases", "Networking feature updates", "Job hunting tools", "Business page management", "Customer service integrations",
+    "Legal compliance updates", "Terms of service modifications", "Copyright policy changes", "Data usage regulations", "Regulatory requirement implementations"
+],
+
+windows: [
+    "Windows update installation issues", "Start menu not working", "Blue screen error codes", "Driver compatibility problems", "Activation troubles",
+    "Taskbar customization options", "File explorer shortcuts", "System restore points", "Disk cleanup utility", "Defragmentation process",
+    "Privacy settings configuration", "Telemetry data control", "Firewall exceptions", "Windows Defender scans", "BitLocker encryption",
+    "PowerShell commands", "Command prompt tricks", "Registry editor warnings", "Group policy settings", "Event viewer logs",
+    "Backup and restore", "Cloud sync settings", "Recovery drive creation", "Safe mode access", "Reset PC options",
+    "Gaming performance optimization", "DirectX version checks", "Game mode settings", "Xbox app issues", "Recording gameplay",
+    "Network troubleshooting", "WiFi connectivity problems", "Ethernet adapter settings", "Network sharing setup", "Remote desktop connection",
+    "Audio driver problems", "Microphone not detected", "Sound enhancement settings", "Spatial sound configuration", "Volume mixer controls",
+    "Display scaling issues", "Multiple monitor setup", "Graphics driver updates", "HDR settings configuration", "Night light schedule",
+    "Battery saving tips", "Power plan customization", "Sleep mode problems", "Hibernate file management", "Startup program control"
+],
+
+linux: [
+    "Ubuntu LTS release", "Kernel panic troubleshooting", "Driver installation terminal", "Package dependency resolution", "Repository configuration",
+    "Desktop environment comparison", "Window manager customization", "GTK theme installation", "Icon pack changes", "Cursor theme settings",
+    "APT package management", "YUM repository updates", "Snap package issues", "Flatpak permissions", "AppImage execution problems",
+    "Server hardening guide", "Bash scripting basics", "Cron job scheduling", "Systemd service creation", "Log rotation configuration",
+    "SELinux policy management", "IPTables firewall rules", "SSH key authentication", "Disk encryption setup", "Password policy enforcement",
+    "GCC compiler options", "GDB debugging techniques", "Git version control", "Docker container management", "Kubernetes cluster setup",
+    "Wine compatibility layers", "ProtonDB ratings check", "Graphics driver installation", "Audio server configuration", "Input device mapping",
+    "Community forum support", "IRC channel guidance", "Manual page reading", "Documentation wiki access", "Tutorial video recommendations",
+    "Enterprise support subscriptions", "Kernel live patching", "Cluster management tools", "Cloud-init configuration", "Virtual machine optimization",
+    "Embedded system development", "IoT device flashing", "Cross-compilation setup", "Real-time kernel patches", "Bootloader customization"
+],
+
+computer: [
+    "CPU overheating solutions", "GPU benchmark comparisons", "RAM compatibility check", "SSD vs HDD performance", "Motherboard BIOS update",
+    "Operating system comparison", "Driver conflict resolution", "Firmware upgrade procedures", "Security patch installation", "Malware removal tools",
+    "Gaming PC build guide", "Workstation configuration tips", "Server hardware selection", "Laptop cooling solutions", "Tablet driver issues",
+    "Monitor response times", "Keyboard switch types", "Mouse DPI settings", "Printer driver installation", "Scanner software compatibility",
+    "Network adapter drivers", "WiFi card replacement", "Ethernet cable categories", "Router firmware update", "VPN client configuration",
+    "Office suite alternatives", "Photo editing software", "Video encoding tools", "IDE setup guides", "System utility programs",
+    "Hardware diagnostic tools", "Memory test procedures", "Hard drive health check", "Power supply calculator", "Thermal paste application",
+    "Custom water cooling", "Case modification ideas", "RGB lighting control", "Fan speed regulation", "Cable routing techniques",
+    "Vintage computer restoration", "Retro game emulation", "Legacy hardware support", "Disk image creation", "Data recovery methods",
+    "Quantum computing developments", "Neuromorphic chip research", "Optical computing progress", "DNA storage experiments", "Organic computing"
+],
+
+india: [
+    "GDP growth rate", "Inflation data latest", "RBI policy decisions", "Stock market trends", "Rupee exchange rates",
+    "Election results analysis", "Policy reform updates", "Government scheme launches", "State assembly sessions", "Local body elections",
+    "Startup funding rounds", "Digital India progress", "IT export figures", "Smartphone sales data", "E-commerce growth statistics",
+    "Festival celebration guides", "Film release reviews", "Music award winners", "Art exhibition openings", "Cultural program schedules",
+    "Cricket match results", "Hockey league updates", "Badminton tournament scores", "Olympic qualification status", "Sports policy changes",
+    "Education policy reforms", "Healthcare infrastructure", "Poverty reduction data", "Women empowerment schemes", "Social justice initiatives",
+    "Air quality index", "Ganga cleaning project", "Solar power capacity", "Wildlife protection news", "Pollution control measures",
+    "Highway construction progress", "Railway modernization plans", "Airport expansion projects", "Urban development schemes", "Smart city initiatives",
+    "Monsoon arrival dates", "Crop production estimates", "Farmer protest updates", "Food security measures", "Agricultural reform news",
+    "Diplomatic relations updates", "Trade agreement negotiations", "NRI policy changes", "International cooperation", "Global partnership news"
+],
+
+china: [
+    "Economic growth statistics", "GDP quarterly reports", "Industrial output data", "Export performance figures", "Import regulation changes",
+    "5G network coverage", "Semiconductor industry news", "AI research breakthroughs", "Space mission updates", "Technology export controls",
+    "Political leadership speeches", "Policy announcement analysis", "Party committee decisions", "Legislation implementation", "Administrative reforms",
+    "Poverty reduction achievements", "Education system reforms", "Healthcare expansion projects", "Urban development plans", "Rural revitalization",
+    "Air quality improvements", "Water pollution control", "Renewable energy projects", "Conservation efforts", "Environmental protection laws",
+    "Traditional festival celebrations", "Cultural heritage protection", "Museum exhibition news", "Art market trends", "Performing arts updates",
+    "Olympic preparation progress", "Basketball league results", "Table tennis championships", "Gymnastics competitions", "Sports policy developments",
+    "Trade agreement implementations", "Belt and Road projects", "Diplomatic visit outcomes", "Territorial policy statements", "International relations news",
+    "E-commerce market share", "Mobile payment adoption", "Social media platform updates", "Entertainment industry news", "Consumer behavior studies",
+    "Military exercise reports", "Naval development news", "Aircraft technology advances", "Defense policy updates", "Cybersecurity measures"
+],
+
+japan: [
+    "Economic stimulus packages", "Yen valuation trends", "Bank of Japan decisions", "Trade surplus data", "Manufacturing output statistics",
+    "Robotics industry advancements", "Consumer electronics launches", "Gaming console sales", "Anime export figures", "Technology innovation awards",
+    "Cherry blossom viewing schedules", "Traditional festival dates", "Cultural craft exhibitions", "Tea ceremony workshops", "Historical site preservation",
+    "Election outcome analysis", "Policy change announcements", "Defense strategy updates", "International relation developments", "Diplomatic meeting results",
+    "Tourist arrival numbers", "Travel restriction updates", "World heritage site news", "Local guide services", "Cultural experience offerings",
+    "Sushi preparation techniques", "Ramen shop reviews", "Street food trends", "Michelin guide updates", "Regional cuisine specialties",
+    "Sumo tournament results", "Baseball league standings", "Soccer team performances", "Olympic legacy projects", "Sports facility developments",
+    "Earthquake early warning system", "Typhoon preparedness measures", "Tsunami evacuation drills", "Volcanic activity monitoring", "Disaster response protocols",
+    "Aging population solutions", "Work culture reforms", "Gender equality progress", "Immigration policy changes", "Social welfare updates",
+    "J-pop music releases", "Drama series ratings", "Film festival entries", "Celebrity news updates", "Entertainment industry trends"
+],
+
+nikola_tesla: [
+    "Alternating current patents", "Wireless power transmission", "Tesla coil experiments", "Radio technology contributions", "X-ray research developments",
+    "Wardenclyffe Tower project", "Colorado Springs experiments", "Laboratory notebook analysis", "Invention sketch studies", "Patent dispute resolutions",
+    "AC vs DC debate", "Edison rivalry details", "Westinghouse partnership", "Financial struggles history", "Later years research",
+    "Visionary predictions analysis", "Future technology ideas", "Scientific method approach", "Experimental techniques", "Theoretical concepts",
+    "Personal correspondence study", "Biographical accuracy checks", "Myth vs fact analysis", "Documentary film reviews", "Book publication reviews",
+    "Laboratory recreation attempts", "Experiment replication efforts", "Modern applications ideas", "Technology influence assessment", "Historical impact evaluation",
+    "Museum exhibition updates", "Archive access information", "Manuscript digitization", "Personal artifact displays", "Historical site preservation",
+    "Scientific recognition efforts", "Award nomination status", "Commemorative events", "Educational program development", "Research grant opportunities",
+    "Pop culture references", "Film portrayals analysis", "Literature appearances", "Artistic interpretations", "Cultural influence assessment",
+    "Engineering principles application", "Modern technology connections", "Patent expiration effects", "Open source implementations", "Future research directions"
+],
+
+history_indus_civilization: [
+    "Harappa excavation reports", "Mohenjo-daro conservation", "Dholavira water management", "Lothal dockyard studies", "Rakhigarhi DNA analysis",
+    "Seal inscription research", "Pottery style analysis", "Bead making techniques", "Metalworking technology", "Weights and measures system",
+    "Urban planning principles", "Drainage system design", "Architectural features", "Great bath function", "Granary capacity calculations",
+    "Trade route mapping", "Mesopotamian connection evidence", "Shipping technology", "Resource procurement methods", "Commercial organization",
+    "Script decipherment attempts", "Symbol interpretation theories", "Language family analysis", "Writing material evidence", "Literacy rate estimates",
+    "Social hierarchy evidence", "Class structure analysis", "Governance system theories", "Religious practice evidence", "Priest king statue",
+    "Agricultural techniques", "Irrigation system design", "Crop rotation evidence", "Animal domestication signs", "Food storage methods",
+    "Climate change impact", "River course changes", "Drought period evidence", "Flood pattern analysis", "Decline theories evaluation",
+    "Radiocarbon dating results", "Stratigraphic analysis", "Chronology refinement", "Cultural phase definitions", "Dating method comparisons",
+    "Museum collection updates", "Exhibition tour schedules", "Site preservation efforts", "Visitor access information", "Educational material availability",
+    "Comparative civilization studies", "Contemporary culture comparisons", "Influence on later periods", "Cultural legacy assessment", "Modern relevance"
+],
+
+egyptian_history: [
+    "Pyramid construction techniques", "Tomb excavation reports", "Mummy analysis results", "Sarcophagus inscription studies", "Burial practice research",
+    "Hieroglyphic translation progress", "Papyrus document findings", "Rosetta Stone analysis", "Language decipherment methods", "Textual analysis techniques",
+    "Pharaoh chronology updates", "Dynasty timeline refinement", "Royal genealogy research", "Succession dispute evidence", "Regency period documentation",
+    "Temple architecture studies", "Karnak complex research", "Luxor excavation updates", "Abu Simbel preservation", "Valley of the Kings discoveries",
+    "Religious belief system", "Deity worship practices", "Afterlife concept evolution", "Funerary ritual details", "Offering analysis",
+    "Military campaign records", "Battle account translations", "Weapon technology analysis", "Fortification design", "Imperial expansion evidence",
+    "Economic system analysis", "Trade network mapping", "Resource management methods", "Labor organization evidence", "Taxation system details",
+    "Daily life reconstruction", "Social class structure", "Women's role evidence", "Education system details", "Entertainment activities",
+    "Art style evolution", "Sculpture technique analysis", "Painting method studies", "Jewelry making skills", "Pottery production methods",
+    "Nubian relation evidence", "Foreign interaction records", "Hyksos period research", "Greek influence evidence", "Roman period documentation",
+    "Conservation technique updates", "Museum exhibition news", "Digital reconstruction projects", "Historical tourism development", "Site management practices"
+],
+
+ashoka_history: [
+    "Edict translation studies", "Pillar inscription analysis", "Rock edict locations", "Script decipherment progress", "Message interpretation",
+    "Kalinga war details", "Conversion to Buddhism", "Dharma propagation efforts", "Missionary dispatch records", "Religious tolerance policies",
+    "Administrative system", "Provincial governance", "Official appointment records", "Law enforcement methods", "Justice system description",
+    "Social welfare measures", "Medical care provisions", "Tree planting initiatives", "Well construction projects", "Rest house establishment",
+    "Foreign relation efforts", "Diplomatic mission records", "Cultural exchange evidence", "Trade relation details", "Peaceful coexistence policies",
+    "Architectural projects", "Stupa construction", "Monastery establishment", "Pillar erection techniques", "Artistic style analysis",
+    "Personal life details", "Family relationship evidence", "Succession process", "Later years accounts", "Death and legacy",
+    "Historical source evaluation", "Archaeological evidence", "Literary reference analysis", "Mythological elements", "Fact verification",
+    "Modern relevance assessment", "Political philosophy influence", "Social policy inspiration", "Religious impact evaluation", "Cultural significance",
+    "Commemorative activities", "Memorial site maintenance", "Educational material development", "Research grant availability", "Documentary production"
+],
+
+ocean_energy: [
+    "Wave energy converter designs", "Oscillating water columns", "Overtopping device efficiency", "Point absorber performance", "Commercial deployment challenges",
+    "Tidal turbine technology", "Tidal barrage projects", "Tidal fence installations", "Environmental impact studies", "Turbine design improvements",
+    "OTEC plant developments", "Temperature gradient utilization", "Deep water pipe technology", "Byproduct usage methods", "Power generation efficiency",
+    "Current energy extraction", "Underwater turbine arrays", "Gulf stream potential", "Kite system advancements", "Moored platform designs",
+    "Salinity gradient power", "Pressure retarded osmosis", "Reverse electrodialysis", "Membrane technology improvements", "Power density calculations",
+    "Hybrid system integration", "Wind-wave combinations", "Solar-ocean energy systems", "Multi-use platform designs", "Fisheries integration possibilities",
+    "Material corrosion resistance", "Biofouling prevention methods", "Marine coating developments", "Structural material testing", "Maintenance techniques",
+    "Grid connection solutions", "Subsea cable technology", "Power transmission efficiency", "Energy storage integration", "Island grid applications",
+    "Policy support mechanisms", "Permitting process analysis", "Environmental regulation compliance", "International collaboration projects", "Funding availability"
+],
+
+smart_cities: [
+    "Urban digital twin implementation", "City simulation models", "Infrastructure monitoring systems", "Predictive maintenance algorithms", "Disaster response planning",
+    "Intelligent traffic management", "Congestion pricing systems", "Smart parking solutions", "Mobility as a service", "Public transportation optimization",
+    "Urban sensor networks", "IoT deployment strategies", "Environmental monitoring", "Air quality sensors", "Noise pollution mapping",
+    "Energy management systems", "Smart grid implementation", "District energy solutions", "Renewable integration", "Demand response programs",
+    "Waste management automation", "Smart bin technology", "Collection optimization", "Recycling incentive programs", "Circular economy initiatives",
+    "Water management systems", "Leak detection technology", "Quality monitoring", "Consumption tracking", "Stormwater management",
+    "Public safety enhancements", "Gunshot detection systems", "Emergency response coordination", "Surveillance ethics", "Community policing technology",
+    "Citizen engagement platforms", "Participatory budgeting systems", "Digital democracy tools", "Service request applications", "Community feedback mechanisms",
+    "Urban resilience planning", "Climate adaptation measures", "Flood protection systems", "Heat island mitigation", "Disaster recovery plans"
+],
+
+healthy_cooking: [
+    "Nutrient preservation techniques", "Cooking method comparisons", "Ingredient substitution guides", "Meal prep strategies", "Time-saving cooking methods",
+    "Nutritional analysis tools", "Healthy eating guidelines", "Diet-specific recipes", "Superfood preparation", "Allergy-friendly cooking",
+    "Restaurant healthy options", "Food trend analysis", "Culinary innovation news", "Chef nutrition training", "Menu labeling standards",
+    "Food safety practices", "Storage method recommendations", "Preservation technique updates", "Expiration dating understanding", "Recall alert systems",
+    "Cuisine health adaptations", "Italian healthy modifications", "Chinese light cooking", "Mexican healthy versions", "Indian spice health benefits",
+    "Beverage health impacts", "Wine health research", "Coffee preparation methods", "Tea health benefits", "Healthy cocktail alternatives",
+    "Food production knowledge", "Agricultural practice awareness", "Processing method understanding", "Supply chain transparency", "Retail fresh standards",
+    "Home gardening benefits", "Herb growing techniques", "Vegetable cultivation", "Composting practices", "Farm-to-table cooking"
+],
+
+indian_states_history: [
+    "State formation history", "Regional language development", "Cultural tradition origins", "Historical kingdom boundaries", "Local dynasty rule periods",
+    "Architectural heritage sites", "Temple construction history", "Fort restoration projects", "Palace preservation efforts", "Historical city conservation",
+    "Traditional art forms", "Folk music evolution", "Dance style origins", "Craft technique history", "Textile tradition development",
+    "Agricultural history", "Crop introduction timeline", "Irrigation system development", "Farming technique evolution", "Rural economy history",
+    "Trade route history", "Market establishment dates", "Commercial tradition development", "Guild system operation", "Merchant community history",
+    "Educational history", "Ancient learning centers", "Traditional knowledge systems", "Modern education introduction", "Literacy rate improvement",
+    "Freedom struggle participation", "Regional leader contributions", "Local movement history", "Independence activism", "Post-independence development",
+    "Industrial growth history", "Factory establishment timeline", "Technology adoption", "Economic policy impact", "Employment pattern changes",
+    "Social reform history", "Caste system evolution", "Women's rights progress", "Educational access expansion", "Healthcare development",
+    "Environmental history", "Forest management traditions", "Water conservation practices", "Wildlife protection efforts", "Conservation policy evolution"
+],
+
+christopher_nolan: [
+    "Film directing style analysis", "Narrative structure techniques", "Temporal manipulation methods", "Practical effect preferences", "IMAX technology use",
+    "Screenwriting approach", "Story development process", "Character creation methods", "Dialogue writing style", "Theme exploration patterns",
+    "Cinematography techniques", "Camera movement choices", "Lighting design philosophy", "Color palette selection", "Visual composition rules",
+    "Sound design philosophy", "Music collaboration history", "Score integration methods", "Audio mixing techniques", "Silence utilization",
+    "Editing style analysis", "Pacing control methods", "Cross-cutting techniques", "Timeline management", "Rhythm establishment",
+    "Production design approach", "Set construction details", "Location selection criteria", "Period accuracy maintenance", "Future vision design",
+    "Collaboration patterns", "Frequent crew members", "Actor working relationships", "Producer partnerships", "Studio relationship management",
+    "Box office performance", "Budget management skills", "Revenue generation patterns", "Profitability analysis", "Investment return records",
+    "Critical reception analysis", "Award nomination history", "Film festival participation", "Review aggregate scores", "Audience response patterns",
+    "Influence assessment", "Filmmaker inspiration sources", "Industry impact evaluation", "Genre development contribution", "Technical innovation role"
+]
+    };
+
+    // Flatten all search terms
+    let allSearchTerms = [];
+    Object.values(searchCategories).forEach(category => {
+        allSearchTerms = allSearchTerms.concat(category);
+    });
+
+    // Common typos and human-like variations
+    const humanBehaviors = {
+        searchPrefixes: [
+            "", "how to ", "what is ", "best ", "top ", "latest ", "new ", "free ", "cheap ",
+            "reviews ", "guide ", "tips ", "tutorial ", "learn ", "find "
+        ],
+        searchSuffixes: [
+            "", " 2024", " 2025", " guide", " tips", " reviews", " tutorial", " help", " information",
+            " news", " update", " latest", " best", " free"
+        ]
+    };
+
+    // Global state
+    let isRunning = false;
+    let currentTimeout = null;
+    let searchData = getSearchData();
+    let currentGapIndex = 0;
+    let breakTimeout = null;
+    let isOnBreak = false;
+    let shortBreakCount = 0;
+
+    // Storage functions
+    function getSearchData() {
+        const stored = GM_getValue(CONFIG.storageKey, null);
+        if (stored) {
+            const data = JSON.parse(stored);
+            // Ensure we have the new lifetimeUsedTerms property
+            if (!data.lifetimeUsedTerms) {
+                data.lifetimeUsedTerms = [...data.usedTerms];
+            }
+            return data;
+        }
+        return {
+            usedTerms: [],
+            lifetimeUsedTerms: [], // NEW: Track all terms used across all sessions
+            searchCount: 0,
+            sessionSearches: 0,
+            lastSearchTime: 0,
+            sessionStartTime: Date.now(),
+            gaps: [...CONFIG.defaultGaps],
+            maxSessionSearches: CONFIG.maxSessionSearches,
+            breakStartTime: Date.now()
+        };
+    }
+
+    function saveSearchData(data) {
+        GM_setValue(CONFIG.storageKey, JSON.stringify(data));
+    }
+
+    // Human-like text modifications
+    function addHumanBehavior(text) {
+        let result = text;
+        
+        // Add prefix (30% chance)
+        if (Math.random() < 0.3) {
+            const prefix = humanBehaviors.searchPrefixes[Math.floor(Math.random() * humanBehaviors.searchPrefixes.length)];
+            result = prefix + result;
+        }
+        
+        // Add suffix (25% chance)
+        if (Math.random() < 0.25) {
+            const suffix = humanBehaviors.searchSuffixes[Math.floor(Math.random() * humanBehaviors.searchSuffixes.length)];
+            result = result + suffix;
+        }
+        
+        return result;
+    }
+
+    // Advanced human-like typing simulation with slower speed and more pauses
+    function simulateHumanTyping(element, text) {
+        return new Promise((resolve) => {
+            element.value = '';
+            element.focus();
+            let i = 0;
+            
+            function typeCharacter() {
+                if (i < text.length) {
+                    let charToType = text.charAt(i);
+                    
+                    // Random pause in the middle of typing (20% chance)
+                    if (i > 2 && i < text.length - 2 && Math.random() < 0.2) {
+                        setTimeout(typeCharacter, Math.random() * 1200 + 600);
+                        return;
+                    }
+                    
+                    element.value += charToType;
+                    element.dispatchEvent(new Event('input', { bubbles: true }));
+                    element.dispatchEvent(new Event('keyup', { bubbles: true }));
+                    i++;
+                    
+                    // Variable typing speed with realistic pauses (slower now)
+                    let delay = Math.random() * 200 + 150; // Slower typing speed
+                    if (charToType === ' ') delay += Math.random() * 200; // Longer pause after spaces
+                    if (i % 3 === 0) delay += Math.random() * 400; // More frequent thinking pauses
+                    
+                    // Occasionally longer pause (15% chance)
+                    if (Math.random() < 0.15) {
+                        delay += Math.random() * 800 + 400;
+                    }
+                    
+                    setTimeout(typeCharacter, delay);
+                } else {
+                    resolve();
+                }
+            }
+            
+            // Start typing after initial delay
+            setTimeout(typeCharacter, Math.random() * 1200 + 600);
+        });
+    }
+
+    // Simulate human-like scrolling behavior (random, not on every search)
+    function simulateHumanScroll() {
+        return new Promise((resolve) => {
+            // Random chance to scroll (30-50% chance, not pattern-based)
+            const shouldScroll = Math.random() < (Math.random() * 0.2 + 0.3);
+            
+            if (shouldScroll) {
+                // Random scroll direction (up or down)
+                const scrollDirection = Math.random() < 0.5 ? 1 : -1;
+                
+                // Random scroll amount (100-500px)
+                const scrollAmount = Math.floor(Math.random() * 400) + 100;
+                
+                // Smooth scroll animation
+                const startPosition = window.scrollY;
+                const targetPosition = startPosition + (scrollDirection * scrollAmount);
+                const duration = Math.random() * 2000 + 1500; // 1.5-3.5 seconds
+                const startTime = performance.now();
+                
+                function scrollStep(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    
+                    // Easing function for smooth scrolling
+                    const ease = progress < 0.5 
+                        ? 4 * progress * progress * progress 
+                        : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+                    
+                    window.scrollTo(0, startPosition + (targetPosition - startPosition) * ease);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(scrollStep);
+                    } else {
+                        // Small pause after scrolling
+                        setTimeout(resolve, Math.random() * 500 + 300);
+                    }
+                }
+                
+                requestAnimationFrame(scrollStep);
+            } else {
+                resolve();
+            }
+        });
+    }
+
+    // Simulate clicking on search suggestions
+    function simulateSearchSuggestions() {
+        return new Promise((resolve) => {
+            // 20% chance to interact with suggestions
+            if (Math.random() < 0.2) {
+                setTimeout(() => {
+                    const suggestions = document.querySelectorAll('.sa_sg, .as_q');
+                    if (suggestions.length > 0 && Math.random() < 0.5) {
+                        // Sometimes click on a suggestion
+                        const randomSuggestion = suggestions[Math.floor(Math.random() * Math.min(3, suggestions.length))];
+                        randomSuggestion.click();
+                        resolve(true); // Suggestion was clicked
+                        return;
+                    }
+                    resolve(false);
+                }, Math.random() * 1500 + 800);
+            } else {
+                resolve(false);
+            }
+        });
+    }
+
+    // Get next gap with randomization - ORIGINAL GAP RULES
+    function getNextGap() {
+        const gaps = searchData.gaps;
+        if (gaps.length === 0) return 8; // Fallback
+        
+        // Shuffle gaps occasionally to avoid patterns
+        if (Math.random() < 0.3) {
+            currentGapIndex = Math.floor(Math.random() * gaps.length);
+        } else {
+            currentGapIndex = (currentGapIndex + 1) % gaps.length;
+        }
+        
+        const baseGap = gaps[currentGapIndex];
+        // Add random variation (±20%)
+        const variation = baseGap * 0.2 * (Math.random() * 2 - 1);
+        return Math.max(1, baseGap + variation);
+    }
+
+    // Check if it's time for a short break (25-40 seconds)
+    function shouldTakeShortBreak() {
+        // Take 1-2 short breaks per session
+        if (shortBreakCount >= 2) return false;
+        
+        // Random chance to take a short break after every few searches
+        if (searchData.sessionSearches > 0 && 
+            (searchData.sessionSearches % Math.floor(Math.random() * 5 + 3) === 0) && 
+            Math.random() < 0.4) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    // Take a short break
+    function takeShortBreak() {
+        isOnBreak = true;
+        shortBreakCount++;
+        const breakDuration = 25 + Math.random() * 15; // 25-40 seconds
+        
+        showNotification(`Taking a short break of ${breakDuration.toFixed(1)} seconds...`);
+        updateUI();
+        
+        breakTimeout = setTimeout(() => {
+            isOnBreak = false;
+            updateUI();
+            
+            if (isRunning) {
+                scheduleNextSearch();
+            }
+        }, breakDuration * 1000);
+    }
+
+    // Perform search with advanced human simulation
+    async function performSearch() {
+        if (!isRunning || isOnBreak) return;
+        
+        try {
+            // Only redirect to Bing if we're not already on a Bing page
+            if (!window.location.href.includes('bing.com')) {
+                window.location.href = 'https://www.bing.com/';
+                return;
+            }
+            
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 2500 + 1500));
+            
+            const searchBox = document.querySelector('#sb_form_q') || document.querySelector('input[name="q"]') || document.querySelector('.b_searchbox');
+            if (!searchBox) {
+                console.log('Search box not found, retrying...');
+                scheduleNextSearch();
+                return;
+            }
+            
+            // Get unused search term - FIXED: Use lifetimeUsedTerms to never repeat searches
+            const availableTerms = allSearchTerms.filter(term => !searchData.lifetimeUsedTerms.includes(term));
+            
+            // If all terms have been used, reset the lifetime used terms
+            if (availableTerms.length === 0) {
+                searchData.lifetimeUsedTerms = [];
+                saveSearchData(searchData);
+            }
+            
+            const baseTerm = availableTerms.length > 0 ? 
+                availableTerms[Math.floor(Math.random() * availableTerms.length)] : 
+                allSearchTerms[Math.floor(Math.random() * allSearchTerms.length)];
+                
+            const searchTerm = addHumanBehavior(baseTerm);
+            
+            // Clear search box and start typing
+            await simulateHumanTyping(searchBox, searchTerm);
+            
+            // Wait and potentially interact with suggestions
+            await new Promise(resolve => setTimeout(resolve, Math.random() * 1800 + 800));
+            const suggestionClicked = await simulateSearchSuggestions();
+            
+            if (!suggestionClicked) {
+                // Submit the search manually
+                await new Promise(resolve => setTimeout(resolve, Math.random() * 1200 + 600));
+                const searchForm = searchBox.closest('form');
+                if (searchForm) {
+                    searchForm.submit();
+                } else {
+                    searchBox.dispatchEvent(new KeyboardEvent('keydown', {
+                        key: 'Enter',
+                        code: 'Enter',
+                        keyCode: 13,
+                        bubbles: true
+                    }));
+                }
+            }
+            
+            // Update search data - FIXED: Track in both session and lifetime arrays
+            searchData.usedTerms.push(baseTerm);
+            searchData.lifetimeUsedTerms.push(baseTerm);
+            searchData.searchCount++;
+            searchData.sessionSearches++;
+            searchData.lastSearchTime = Date.now();
+            saveSearchData(searchData);
+            updateUI();
+            
+            console.log(`Search performed: "${searchTerm}" (${searchData.sessionSearches}/${searchData.maxSessionSearches})`);
+            
+            // Simulate scrolling after search (random, not on every search)
+            await simulateHumanScroll();
+            
+            // Check if session limit reached
+            if (searchData.sessionSearches >= searchData.maxSessionSearches) {
+                stopSearching();
+                showNotification('Session completed!');
+                return;
+            }
+            
+            // Check for break time
+            checkForBreak();
+            
+            // Check for short break
+            if (shouldTakeShortBreak()) {
+                takeShortBreak();
+                return;
+            }
+            
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+        
+        scheduleNextSearch();
+    }
+
+    // Schedule next search
+    function scheduleNextSearch() {
+        if (!isRunning || isOnBreak) return;
+        
+        const gap = getNextGap();
+        const gapMs = gap * 1000;
+        console.log(`Next search in ${gap.toFixed(2)} seconds`);
+        updateNextSearchInfo(gap);
+        
+        currentTimeout = setTimeout(performSearch, gapMs);
+    }
+
+    // Break management
+    function checkForBreak() {
+        const timeSinceBreakStart = Date.now() - searchData.breakStartTime;
+        const breakIntervalMs = CONFIG.breakInterval * 60 * 1000;
+        
+        if (timeSinceBreakStart >= breakIntervalMs) {
+            takeBreak();
+        }
+    }
+
+    function takeBreak() {
+        isOnBreak = true;
+        const breakDuration = (CONFIG.microBreakDuration[0] + Math.random() * (CONFIG.microBreakDuration[1] - CONFIG.microBreakDuration[0])) * 60 * 1000;
+        
+        showNotification(`Taking a ${Math.round(breakDuration/60000)} minute break...`);
+        updateUI();
+        
+        breakTimeout = setTimeout(() => {
+            isOnBreak = false;
+            searchData.breakStartTime = Date.now();
+            saveSearchData(searchData);
+            updateUI();
+            
+            if (isRunning) {
+                scheduleNextSearch();
+            }
+        }, breakDuration);
+    }
+
+    // UI Creation
+    function createUI() {
+        const panel = document.createElement('div');
+        panel.id = 'ultimateBingSearchPanel';
+        panel.style.cssText = `
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji';
+            font-size: 14px;
+            z-index: 10000;
+            width: 320px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255,255,255,0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        `;
+        
+        panel.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 700;">🤖 Ultimate Bing Search</h3>
+                <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Advanced Human Simulation</div>
+            </div>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                    <div>
+                        <div style="opacity: 0.8;">Session:</div>
+                        <div style="font-weight: 600;" id="sessionCount">${searchData.sessionSearches}/${searchData.maxSessionSearches}</div>
+                    </div>
+                    <div>
+                        <div style="opacity: 0.8;">Total:</div>
+                        <div style="font-weight: 600;" id="totalCount">${searchData.searchCount}</div>
+                    </div>
+                    <div>
+                        <div style="opacity: 0.8;">Used Terms:</div>
+                        <div style="font-weight: 600;" id="usedTerms">${searchData.lifetimeUsedTerms.length}</div>
+                    </div>
+                    <div>
+                        <div style="opacity: 0.8;">Status:</div>
+                        <div style="font-weight: 600;" id="status">Stopped</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Session Limit:</label>
+                <input type="number" id="sessionLimit" value="${searchData.maxSessionSearches}" style="width: 100%; padding: 10px; border: none; border-radius: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 14px;">
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <label style="font-weight: 600;">Time Gaps (seconds):</label>
+                    <button id="addGapBtn" style="padding: 5px 10px; border: none; border-radius: 6px; background: #4CAF50; color: white; font-size: 12px; cursor: pointer;">+ Add</button>
+                </div>
+                <div id="gapsContainer" style="max-height: 150px; overflow-y: auto; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+                    ${generateGapsHTML()}
+                </div>
+                <button id="shuffleGapsBtn" style="width: 100%; margin-top: 10px; padding: 8px; border: none; border-radius: 6px; background: #FF9800; color: white; font-weight: 600; cursor: pointer;">
+                    🔄 Shuffle Gaps
+                </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <button id="startStopBtn" style="padding: 12px; border: none; border-radius: 10px; background: #4CAF50; color: white; font-weight: 700; cursor: pointer; transition: all 0.3s;">
+                    ▶️ Start
+                </button>
+                <button id="resetBtn" style="padding: 12px; border: none; border-radius: 10px; background: #f44336; color: white; font-weight: 700; cursor: pointer; transition: all 0.3s;">
+                    🔄 Reset
+                </button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <button id="editorBtn" style="padding: 10px; border: none; border-radius: 8px; background: #9C27B0; color: white; font-weight: 600; cursor: pointer;">
+                    📒 Editor
+                </button>
+                <button id="statsBtn" style="padding: 10px; border: none; border-radius: 8px; background: #2196F3; color: white; font-weight: 600; cursor: pointer;">
+                    📊 Stats
+                </button>
+            </div>
+            
+            <div id="nextSearchInfo" style="font-size: 12px; text-align: center; opacity: 0.9; background: rgba(255,255,255,0.1; padding: 10px; border-radius: 8px;">
+                Ready to start searching...
+            </div>
+            
+            <div style="position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; font-weight: bold;" id="minimizeBtn">−</div>
+        `;
+        
+        document.body.appendChild(panel);
+        setupEventListeners();
+        updateUI();
+    }
+
+    // Generate gaps HTML
+    function generateGapsHTML() {
+        return searchData.gaps.map((gap, index) => `
+            <div style="display: flex; align-items: center; margin-bottom: 5px;">
+                <input type="number" step="0.01" value="${gap}" data-index="${index}" class="gap-input" style="flex: 1; padding: 5px; border: none; border-radius: 4px; margin-right: 5px; font-size: 12px;">
+                <button class="remove-gap" data-index="${index}" style="padding: 5px 8px; border: none; border-radius: 4px; background: #f44336; color: white; font-size: 10px; cursor: pointer;">×</button>
+            </div>
+        `).join('');
+    }
+
+    // Setup event listeners
+    function setupEventListeners() {
+        document.getElementById('startStopBtn').addEventListener('click', toggleSearch);
+        document.getElementById('resetBtn').addEventListener('click', resetData);
+        document.getElementById('editorBtn').addEventListener('click', openEditor);
+        document.getElementById('statsBtn').addEventListener('click', openStats);
+        document.getElementById('minimizeBtn').addEventListener('click', minimizePanel);
+        document.getElementById('addGapBtn').addEventListener('click', addGap);
+        document.getElementById('shuffleGapsBtn').addEventListener('click', shuffleGaps);
+        document.getElementById('sessionLimit').addEventListener('change', updateSessionLimit);
+        
+        // Gap input listeners
+        updateGapListeners();
+        
+        // Add hover effects
+        const buttons = ['startStopBtn', 'resetBtn', 'editorBtn', 'statsBtn', 'addGapBtn', 'shuffleGapsBtn'];
+        buttons.forEach(btnId => {
+            const btn = document.getElementById(btnId);
+            if (btn) {
+                btn.addEventListener('mouseenter', () => btn.style.transform = 'scale(1.05)');
+                btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+            }
+        });
+    }
+
+    // Update gap listeners
+    function updateGapListeners() {
+        document.querySelectorAll('.gap-input').forEach(input => {
+            input.addEventListener('change', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                const value = parseFloat(e.target.value);
+                if (value > 0) {
+                    searchData.gaps[index] = value;
+                    saveSearchData(searchData);
+                }
+            });
+        });
+        
+        document.querySelectorAll('.remove-gap').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                removeGap(index);
+            });
+        });
+    }
+
+    // Toggle search
+    function toggleSearch() {
+        const btn = document.getElementById('startStopBtn');
+        if (isRunning) {
+            stopSearching();
+        } else {
+            startSearching();
+        }
+    }
+
+    // Start searching
+    function startSearching() {
+        isRunning = true;
+        isOnBreak = false;
+        shortBreakCount = 0;
+        
+        // Shuffle gaps when starting (anti-pattern feature)
+        if (Math.random() < 0.7) { // 70% chance to shuffle
+            shuffleGaps(false); // Silent shuffle
+        }
+        
+        // Reset session if needed
+        if (searchData.sessionSearches >= searchData.maxSessionSearches) {
+            searchData.sessionSearches = 0;
+            searchData.usedTerms = [];
+        }
+        
+        searchData.breakStartTime = Date.now();
+        saveSearchData(searchData);
+        
+        const btn = document.getElementById('startStopBtn');
+        btn.innerHTML = '⏸️ Stop';
+        btn.style.background = '#f44336';
+        
+        updateUI();
+        scheduleNextSearch();
+        showNotification('🤖 Search engine started!');
+    }
+
+    // Stop searching
+    function stopSearching() {
+        isRunning = false;
+        isOnBreak = false;
+        
+        if (currentTimeout) {
+            clearTimeout(currentTimeout);
+            currentTimeout = null;
+        }
+        
+        if (breakTimeout) {
+            clearTimeout(breakTimeout);
+            breakTimeout = null;
+        }
+        
+        const btn = document.getElementById('startStopBtn');
+        btn.innerHTML = '▶️ Start';
+        btn.style.background = '#4CAF50';
+        
+        updateUI();
+        showNotification('⏸️ Search engine stopped');
+    }
+
+    // Add gap
+    function addGap() {
+        const newGap = prompt('Enter gap in seconds (decimals allowed):');
+        if (newGap && !isNaN(parseFloat(newGap)) && parseFloat(newGap) > 0) {
+            searchData.gaps.push(parseFloat(newGap));
+            saveSearchData(searchData);
+            refreshGapsContainer();
+            showNotification('Gap added successfully!');
+        }
+    }
+
+    // Remove gap
+    function removeGap(index) {
+        if (searchData.gaps.length > 1) {
+            searchData.gaps.splice(index, 1);
+            saveSearchData(searchData);
+            refreshGapsContainer();
+            showNotification('Gap removed');
+        } else {
+            showNotification('Cannot remove last gap!');
+        }
+    }
+
+    // Shuffle gaps
+    function shuffleGaps(showNotif = true) {
+        for (let i = searchData.gaps.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [searchData.gaps[i], searchData.gaps[j]] = [searchData.gaps[j], searchData.gaps[i]];
+        }
+        saveSearchData(searchData);
+        refreshGapsContainer();
+        
+        if (showNotif) {
+            const btn = document.getElementById('shuffleGapsBtn');
+            btn.innerHTML = '✓ Shuffled';
+            setTimeout(() => {
+                btn.innerHTML = '🔄 Shuffle Gaps';
+            }, 1500);
+        }
+    }
+
+    // Refresh gaps container
+    function refreshGapsContainer() {
+        const container = document.getElementById('gapsContainer');
+        container.innerHTML = generateGapsHTML();
+        updateGapListeners();
+    }
+
+    // Update session limit
+    function updateSessionLimit(e) {
+        const value = parseInt(e.target.value);
+        if (value > 0) {
+            searchData.maxSessionSearches = value;
+            saveSearchData(searchData);
+            updateUI();
+        }
+    }
+
+    // Reset data
+    function resetData() {
+        if (confirm('🔄 Reset all search data? This will clear your progress.')) {
+            stopSearching();
+            GM_deleteValue(CONFIG.storageKey);
+            searchData = getSearchData();
+            refreshGapsContainer();
+            updateUI();
+            showNotification('🔄 Data reset successfully!');
+        }
+    }
+
+    // Open editor
+    function openEditor() {
+        const modal = createModal('Search Terms Editor', `
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Select Category:</label>
+                <select id="categorySelect" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+                    ${Object.keys(searchCategories).map(cat => `<option value="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</option>`).join('')}
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Search Terms:</label>
+                <textarea id="searchTermsEditor" style="width: 100%; height: 300px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 13px; resize: vertical;"></textarea>
+                <div style="font-size: 12px; color: #666; margin-top: 5px;">One term per line. Total terms: <span id="termCount">0</span></div>
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="loadCategory" style="padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 6px; cursor: pointer;">Load Category</button>
+                <button id="saveTerms" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer;">Save Changes</button>
+                <button id="cancelEdit" style="padding: 10px 20px; background: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer;">Cancel</button>
+            </div>
+        `);
+        
+        const categorySelect = modal.querySelector('#categorySelect');
+        const editor = modal.querySelector('#searchTermsEditor');
+        const termCount = modal.querySelector('#termCount');
+        
+        // Load first category
+        loadCategoryTerms();
+        
+        function loadCategoryTerms() {
+            const category = categorySelect.value;
+            editor.value = searchCategories[category].join('\n');
+            updateTermCount();
+        }
+        
+        function updateTermCount() {
+            const terms = editor.value.split('\n').filter(term => term.trim());
+            termCount.textContent = terms.length;
+        }
+        
+        editor.addEventListener('input', updateTermCount);
+        modal.querySelector('#loadCategory').addEventListener('click', loadCategoryTerms);
+        categorySelect.addEventListener('change', loadCategoryTerms);
+        
+        modal.querySelector('#saveTerms').addEventListener('click', () => {
+            const category = categorySelect.value;
+            const newTerms = editor.value.split('\n').filter(term => term.trim());
+            searchCategories[category] = newTerms;
+            
+            // Rebuild allSearchTerms
+            allSearchTerms = [];
+            Object.values(searchCategories).forEach(cat => {
+                allSearchTerms = allSearchTerms.concat(cat);
+            });
+            
+            modal.remove();
+            showNotification(`✓ ${category} category updated with ${newTerms.length} terms!`);
+        });
+        
+        modal.querySelector('#cancelEdit').addEventListener('click', () => modal.remove());
+    }
+
+    // Open stats - FIXED: Show category progress from all sessions
+    function openStats() {
+        const totalTerms = allSearchTerms.length;
+        const usedPercentage = ((searchData.lifetimeUsedTerms.length / totalTerms) * 100).toFixed(1);
+        const avgGap = (searchData.gaps.reduce((a, b) => a + b, 0) / searchData.gaps.length).toFixed(2);
+        const sessionProgress = ((searchData.sessionSearches / searchData.maxSessionSearches) * 100).toFixed(1);
+        
+        const categoryStats = Object.keys(searchCategories).map(cat => {
+            const catTerms = searchCategories[cat];
+            const usedInCat = searchData.lifetimeUsedTerms.filter(term => catTerms.includes(term)).length;
+            return `
+                <div style="display: flex; justify-content: space-between; padding: 8px; background: ${usedInCat > 0 ? 'rgba(76, 175, 80, 0.1)' : 'rgba(0,0,0,0.05)'}; border-radius: 6px; margin-bottom: 5px;">
+                    <span style="font-weight: 600; text-transform: capitalize;">${cat}:</span>
+                    <span>${usedInCat}/${catTerms.length} (${((usedInCat/catTerms.length)*100).toFixed(1)}%)</span>
+                </div>
+            `;
+        }).join('');
+        
+        createModal('📊 Search Statistics', `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold;">${searchData.searchCount}</div>
+                    <div style="opacity: 0.9;">Total Searches</div>
+                </div>
+                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 24px; font-weight: bold;">${sessionProgress}%</div>
+                    <div style="opacity: 0.9;">Session Progress</div>
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #333;">General Statistics</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 14px;">
+                    <div><strong>Used Terms:</strong> ${searchData.lifetimeUsedTerms.length}/${totalTerms} (${usedPercentage}%)</div>
+                    <div><strong>Average Gap:</strong> ${avgGap}s</div>
+                    <div><strong>Session Searches:</strong> ${searchData.sessionSearches}/${searchData.maxSessionSearches}</div>
+                    <div><strong>Total Gaps:</strong> ${searchData.gaps.length}</div>
+                </div>
+            </div>
+            
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 12px;">
+                <h4 style="margin: 0 0 15px 0; color: #333;">Category Usage (All Sessions)</h4>
+                <div style="max-height: 300px; overflow-y: auto;">
+                    ${categoryStats}
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="this.closest('.modal-overlay').remove()" style="padding: 12px 30px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                    Close
+                </button>
+            </div>
+        `);
+    }
+
+    // Create modal
+    function createModal(title, content) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 10001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        `;
+        
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            width: 90%;
+        `;
+        
+        modal.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: край; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #eee;">
+                <h3 style="margin: 0; color: #333; font-size: 22px;">${title}</h3>
+                <button onclick="this.closest('.modal-overlay').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999; padding: 5px;">×</button>
+            </div>
+            ${content}
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Close on overlay click
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) overlay.remove();
+        });
+        
+        return modal;
+    }
+
+    // Minimize panel
+    function minimizePanel() {
+        const panel = document.getElementById('ultimateBingSearchPanel');
+        const btn = document.getElementById('minimizeBtn');
+        
+        if (panel.style.height === '60px') {
+            panel.style.height = 'auto';
+            panel.style.overflow = 'visible';
+            btn.textContent = '−';
+        } else {
+            panel.style.height = '60px';
+            panel.style.overflow = 'hidden';
+            btn.textContent = '+';
+        }
+    }
+
+    // Update UI
+    function updateUI() {
+        const elements = {
+            sessionCount: `${searchData.sessionSearches}/${searchData.maxSessionSearches}`,
+            totalCount: searchData.searchCount.toString(),
+            usedTerms: searchData.lifetimeUsedTerms.length.toString(),
+            status: isOnBreak ? 'On Break' : (isRunning ? 'Running' : 'Stopped')
+        };
+        
+        Object.entries(elements).forEach(([id, value]) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = value;
+        });
+        
+        // Update status color
+        const statusElement = document.getElementById('status');
+        if (statusElement) {
+            if (isOnBreak) {
+                statusElement.style.color = '#FF9800';
+            } else if (isRunning) {
+                statusElement.style.color = '#4CAF50';
+            } else {
+                statusElement.style.color = '#f44336';
+            }
+        }
+    }
+
+    // Update next search info
+    function updateNextSearchInfo(gap) {
+        const info = document.getElementById('nextSearchInfo');
+        if (info) {
+            if (isOnBreak) {
+                info.textContent = '⏰ Taking a break...';
+            } else if (isRunning) {
+                info.textContent = `⏱️ Next search in ${gap.toFixed(1)}s | Gap ${currentGapIndex + 1}/${searchData.gaps.length}`;
+            } else {
+                info.textContent = '🤖 Ready to start searching...';
+            }
+        }
+    }
+
+    // Show notification
+    function showNotification(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 10002;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Remove after delay
+        setTimeout(() => {
+            notification.style.transform = 'translateX(400px)';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+
+    // Add mouse movement simulation
+    function simulateMouseMovement() {
+        setInterval(() => {
+            if (isRunning && Math.random() < 0.1) { // 10% chance every interval
+                const event = new MouseEvent('mousemove', {
+                    clientX: Math.random() * window.innerWidth,
+                    clientY: Math.random() * window.innerHeight,
+                    bubbles: true
+                });
+                document.dispatchEvent(event);
+            }
+        }, 5000);
+    }
+
+    // Initialize the script
+    function init() {
+        if (!window.location.href.includes('bing.com')) return;
+        
+        // Wait for page to fully load
+        setTimeout(() => {
+            createUI();
+            simulateMouseMovement();
+            
+            // Auto-start if was running before page reload
+            const wasRunning = sessionStorage.getItem('bingSearchWasRunning');
+            if (wasRunning === 'true') {
+                sessionStorage.removeItem('bingSearchWasRunning');
+                setTimeout(() => {
+                    startSearching();
+                }, Math.random() * 3000 + 2000);
+            }
+            
+            showNotification('🤖 Ultimate Bing Search loaded successfully!');
+        }, Math.random() * 2000 + 1000);
+    }
+
+    // Handle page unload
+    window.addEventListener('beforeunload', () => {
+        if (isRunning) {
+            sessionStorage.setItem('bingSearchWasRunning', 'true');
+        }
+    });
+
+    // Handle visibility change (tab switching)
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && isRunning) {
+            // Pause when tab is hidden
+            if (currentTimeout) {
+                clearTimeout(currentTimeout);
+                currentTimeout = null;
+            }
+        } else if (!document.hidden && isRunning && !currentTimeout) {
+            // Resume when tab becomes visible
+            setTimeout(() => {
+                if (isRunning) scheduleNextSearch();
+            }, Math.random() * 2000 + 1000);
+        }
+    });
+
+    // Start the script
+    init();
+})();
